@@ -25,7 +25,8 @@ def run_testcase(test_file):
 
     start_time = time.perf_counter()
     status = ""
-    output = ""
+    heuristic_value = None
+    gap = None
     
     try:
         command = ["python3", EXECUTABLE] if EXECUTABLE.endswith('.py') else [EXECUTABLE]
@@ -34,7 +35,7 @@ def run_testcase(test_file):
             input=input_data,
             capture_output=True,
             text=True,
-            timeout=TIME_LIMIT_SEC,
+            # timeout=TIME_LIMIT_SEC,
             # preexec_fn=set_process_limits
         )
         
@@ -42,7 +43,9 @@ def run_testcase(test_file):
         
         if process.returncode == 0:
             status = "✅ AC"
-            output = process.stdout.strip()
+            heuristic_value = float(process.stdout.strip())
+            gap = (heuristic_value - optimal_value) / optimal_value * 100 if optimal_value > 0 else 0
+
         else:
             status = f"🔴 RE/MLE"
             
@@ -53,7 +56,7 @@ def run_testcase(test_file):
         elapsed_time = 0
         status = f"❌ Lỗi Hệ thống: {e}"
 
-    return status, elapsed_time, output
+    return status, elapsed_time, optimal_value, heuristic_value, gap
 
 def main():
     if not os.path.exists(EXECUTABLE):
@@ -69,37 +72,40 @@ def main():
     if not test_files:
         print(f"CẢNH BÁO: Thư mục '{DATA_DIR}' đang trống.")
         return
-
-    print("=" * 60)
+    
+    print("=" * 85)
+    print(f"{'Testcase':<15} | {'Trạng thái':<15} | {'Thời gian (s)':<15} | {'Heuristic':<10} | {'Tối ưu':<10} | {'Gap (%)':<10}")
+    print("-" * 85)
     
     passed_count = 0
     total_count = len(test_files)
     total_time = 0
-    
-    print(f"{'Testcase':<20} | {'Độ lệch':<30} | {'Thời gian (s)'}")
-    print("-" * 60)
+    gap_count = 0
+    total_gap = 0
 
     for test_file in test_files:
-        status, elapsed, output, optimal_value = run_testcase(test_file)
-        
+        status, elapsed, optimal_value, heuristic_value, gap = run_testcase(test_file)  
         name = os.path.splitext(test_file)[0]
 
-        display_str = status
-        if "AC" in status:
-            passed_count += 1
-            output_val = float(output)
-            deviation = (optimal_value - output_val) / optimal_value if optimal_value != 0 else (optimal_value - output_val)
-            display_str = f"{deviation:.6f}"
+        h_str = f"{heuristic_value:.1f}" if heuristic_value is not None else "-"
+        o_str = f"{optimal_value:.1f}" if optimal_value is not None else "-"
+        gap_str = f"{gap:+.2f}%" if gap is not None else "-"
         
-        print(f"{name:<20} | {display_str:<30} | {elapsed:.4f}s")
+        print(f"{name:<15} | {status:<15} | {elapsed:<15.4f} | {h_str:<10} | {o_str:<10} | {gap_str:<10}")
 
         total_time += elapsed
-        
+
         if "AC" in status:
             passed_count += 1
 
-    print("=" * 60)
-    print(f"Kết quả: {passed_count} / {total_count} testcases ({(passed_count/total_count)*100:.1f}%) | Tổng thời gian: {total_time:.4f}s")
+        if gap is not None:
+            total_gap += gap
+            gap_count += 1
+
+    avg_gap = total_gap / gap_count if gap_count > 0 else 0
+
+    print("=" * 85)
+    print(f"Kết quả: {passed_count} / {total_count} testcases ({(passed_count/total_count)*100:.1f}%) | Tổng thời gian: {total_time:.4f}s | Trung bình gap: {avg_gap:.4f}%")
 
 if __name__ == "__main__":
     main()

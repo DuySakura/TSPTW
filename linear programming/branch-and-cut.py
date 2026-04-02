@@ -36,17 +36,17 @@ def solve(n, e, l, d, t):
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
-        # print(solver.Objective().Value())
-        print(n - 1)
+        print(solver.Objective().Value())
+        # print(n - 1)
 
-        prev = 0
-        for _ in range(n - 1):
-            for i in range(n):
-                if x[prev, i].solution_value() == True:
-                    print(i, end=' ')
-                    prev = i
-                    break
-        print()
+        # prev = 0
+        # for _ in range(n - 1):
+        #     for i in range(n):
+        #         if x[prev, i].solution_value() == True:
+        #             print(i, end=' ')
+        #             prev = i
+        #             break
+        # print()
     
     else:
         print("Không tìm thấy nghiệm tối ưu")

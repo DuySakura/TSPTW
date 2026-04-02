@@ -44,19 +44,20 @@ def solve(n, e, l, d, t):
     solution = routing.SolveWithParameters(search_parameters)
 
     if solution:
-        print(n - 1)
+        print(solution.ObjectiveValue())
+        # print(n - 1)
 
-        idx = routing.Start(0)
+        # idx = routing.Start(0)
         
-        while True:
-            idx = solution.Value(routing.NextVar(idx))
+        # while True:
+        #     idx = solution.Value(routing.NextVar(idx))
 
-            if routing.IsEnd(idx):
-                break
+        #     if routing.IsEnd(idx):
+        #         break
 
-            print(manager.IndexToNode(idx), end=' ')
+        #     print(manager.IndexToNode(idx), end=' ')
 
-        print()
+        # print()
     
     else:
         print("Không tìm thấy nghiệm tối ưu")

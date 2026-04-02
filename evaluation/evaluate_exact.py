@@ -18,11 +18,13 @@ def run_testcase(test_file):
     test_path = os.path.join(DATA_DIR, test_file)
     
     with open(test_path, 'r') as f:
-        input_data = f.read()
+        lines = f.read().strip().split('\n')
+
+    optimal_value = float(lines[0].strip())
+    input_data = '\n'.join(lines[1:]) + '\n'
 
     start_time = time.perf_counter()
     status = ""
-    output = ""
     
     try:
         command = ["python3", EXECUTABLE] if EXECUTABLE.endswith('.py') else [EXECUTABLE]
@@ -38,8 +40,10 @@ def run_testcase(test_file):
         elapsed_time = time.perf_counter() - start_time
         
         if process.returncode == 0:
-            status = "✅ AC"
-            output = process.stdout.strip()
+            if abs(float(process.stdout.strip()) - optimal_value) <= 1e-6:
+                status = "✅ AC"
+            else:
+                status = "❌ WA"
         else:
             status = f"🔴 RE/MLE"
             
@@ -50,7 +54,7 @@ def run_testcase(test_file):
         elapsed_time = 0
         status = f"❌ Lỗi Hệ thống: {e}"
 
-    return status, elapsed_time, output
+    return status, elapsed_time
 
 def main():
     if not os.path.exists(EXECUTABLE):
@@ -68,20 +72,18 @@ def main():
         return
 
     print("=" * 60)
+    print(f"{'Testcase':<20} | {'Trạng thái':<20} | {'Thời gian (s)':<20}")
+    print("-" * 60)
     
     passed_count = 0
     total_count = len(test_files)
     total_time = 0
-    
-    print(f"{'Testcase':<20} | {'Trạng thái':<30} | {'Thời gian (s)'}")
-    print("-" * 60)
 
     for test_file in test_files:
-        status, elapsed, _ = run_testcase(test_file)
-        
+        status, elapsed = run_testcase(test_file)
         name = os.path.splitext(test_file)[0]
         
-        print(f"{name:<20} | {status:<30} | {elapsed:.4f}s")
+        print(f"{name:<20} | {status:<19} | {elapsed:<20.4f}")
 
         total_time += elapsed
         

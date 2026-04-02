@@ -51,6 +51,7 @@ int main() {
     }
 
     solve(0, 0, 0, 0);
-    cout << n << endl;
-    for (const auto &x : s) cout << x << ' ';
+    // cout << n << endl;
+    // for (const auto &x : s) cout << x << ' ';
+    cout << res << endl;
 }

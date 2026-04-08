@@ -49,7 +49,7 @@ def solve(n, e, l, d, t):
         # print()
     
     else:
-        print("Không tìm thấy nghiệm tối ưu")
+        print(-1)
 
     
 if __name__ == "__main__":

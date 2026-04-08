@@ -37,9 +37,9 @@ def solve(n, e, l, d, t):
         time_dimension.CumulVar(manager.NodeToIndex(i)).SetRange(e[i], l[i])
 
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-    search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+    search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION
     search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    search_parameters.time_limit.seconds = 60
+    search_parameters.time_limit.seconds = 30
 
     solution = routing.SolveWithParameters(search_parameters)
 
@@ -60,7 +60,7 @@ def solve(n, e, l, d, t):
         # print()
     
     else:
-        print("Không tìm thấy nghiệm tối ưu")
+        print(-1)
 
 
 if __name__ == "__main__":

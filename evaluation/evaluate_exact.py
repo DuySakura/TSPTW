@@ -4,7 +4,7 @@ import time
 import resource
 
 
-EXECUTABLE = "linear programming/guided-local-search.py"
+EXECUTABLE = "dp/dp"
 DATA_DIR = "data" 
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 1024

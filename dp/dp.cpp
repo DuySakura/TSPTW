@@ -52,9 +52,29 @@ int main() {
 
     solve();
 
-    int res = INT_MAX;
+    int res = INT_MAX, mask = (1 << n) - 1, idx = -1;
     for (int i = 0; i < n; ++i) {
-        if (travel_time[(1 << n) - 1][i] != INT_MAX) res = min(res, travel_time[(1 << n) - 1][i] + t[i+1][0]);
+        if (travel_time[(1 << n) - 1][i] != INT_MAX) {
+            if (res > travel_time[mask][i] + t[i+1][0]){
+                res = travel_time[mask][i] + t[i+1][0];
+                idx = i;
+            }
+        }
     }
     cout << res << endl;
+
+    // stack<int> s;
+    // for (int i = 0; i < n; ++i) {
+    //     s.push(idx + 1);
+    //     int prev_idx = route[mask][idx];
+    //     mask ^= (1 << idx);
+    //     idx = prev_idx;
+    // }
+
+    // cout << n << endl;
+
+    // while (!s.empty()) {
+    //     cout << s.top() << ' ';
+    //     s.pop();
+    // }
 }

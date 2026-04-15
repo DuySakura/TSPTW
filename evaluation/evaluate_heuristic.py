@@ -58,7 +58,7 @@ def run_testcase(test_file):
 
     return status, elapsed_time, optimal_value, heuristic_value, gap
 
-def main():
+def evaluate():
     if not os.path.exists(EXECUTABLE):
         print(f"LỖI: Không tìm thấy file chạy '{EXECUTABLE}'. Vui lòng biên dịch code C++ trước (g++ dp.cpp -o dp.out).")
         return
@@ -91,7 +91,7 @@ def main():
         o_str = f"{optimal_value:.1f}" if optimal_value is not None else "-"
         gap_str = f"{gap:+.2f}%" if gap is not None else "-"
         
-        print(f"{name:<15} | {status:<15} | {elapsed:<15.4f} | {h_str:<10} | {o_str:<10} | {gap_str:<10}")
+        print(f"{name:<15} | {status:<14} | {elapsed:<15.4f} | {h_str:<10} | {o_str:<10} | {gap_str:<10}")
 
         total_time += elapsed
 
@@ -102,10 +102,32 @@ def main():
             total_gap += gap
             gap_count += 1
 
+    passed_percentage = passed_count / total_count * 100
     avg_gap = total_gap / gap_count if gap_count > 0 else 0
 
     print("=" * 85)
-    print(f"Kết quả: {passed_count} / {total_count} testcases ({(passed_count/total_count)*100:.1f}%) | Tổng thời gian: {total_time:.4f}s | Trung bình gap: {avg_gap:.4f}%")
+    print(f"Kết quả: {passed_count} / {total_count} testcases ({passed_percentage:.1f}%) | Tổng thời gian: {total_time:.4f}s | Trung bình gap: {avg_gap:.4f}%")
+
+    return passed_percentage, total_time, avg_gap
+
 
 if __name__ == "__main__":
-    main()
+    passed_percentage_history = []
+    total_time_history = []
+    avg_gap_history = []
+
+    for i in range(3):
+        print(f'LẦN THỨ {i+1}')
+
+        passed_percentage, total_time, avg_gap = evaluate()
+        passed_percentage_history.append(passed_percentage)
+        total_time_history.append(total_time)
+        avg_gap_history.append(avg_gap)
+
+        print("=" * 85)
+        print()
+    
+    print('TỔNG KẾT')
+    print(f'Kết quả trung bình: {sum(passed_percentage_history)/len(passed_percentage_history):.1f}%')
+    print(f'Tổng thời gian trung bình: {sum(total_time_history)/len(total_time_history):.4f}s')
+    print(f'Trung bình gap: {sum(avg_gap_history)/len(avg_gap_history):.4f}%')

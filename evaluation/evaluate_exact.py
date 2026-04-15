@@ -34,7 +34,7 @@ def run_testcase(test_file):
             capture_output=True,
             text=True,
             timeout=TIME_LIMIT_SEC,
-            # preexec_fn=set_process_limits
+            preexec_fn=set_process_limits
         )
         
         elapsed_time = time.perf_counter() - start_time
@@ -56,7 +56,7 @@ def run_testcase(test_file):
 
     return status, elapsed_time
 
-def main():
+def evaluate():
     if not os.path.exists(EXECUTABLE):
         print(f"LỖI: Không tìm thấy file chạy '{EXECUTABLE}'. Vui lòng biên dịch code C++ trước (g++ dp.cpp -o dp.out).")
         return
@@ -90,8 +90,28 @@ def main():
         if "AC" in status:
             passed_count += 1
 
+    passed_percentage = passed_count / total_count * 100
+
     print("=" * 60)
-    print(f"Kết quả: {passed_count} / {total_count} testcases ({(passed_count/total_count)*100:.1f}%) | Tổng thời gian: {total_time:.4f}s")
+    print(f"Kết quả: {passed_count} / {total_count} testcases ({passed_percentage:.1f}%) | Tổng thời gian: {total_time:.4f}s")
+
+    return passed_percentage, total_time
+
 
 if __name__ == "__main__":
-    main()
+    passed_percentage_history = []
+    total_time_history = []
+
+    for i in range(3):
+        print(f'LẦN THỨ {i+1}')
+
+        passed_percentage, total_time = evaluate()
+        passed_percentage_history.append(passed_percentage)
+        total_time_history.append(total_time)
+
+        print("=" * 60)
+        print()
+
+    print('TỔNG KẾT')
+    print(f'Kết quả trung bình: {sum(passed_percentage_history)/len(passed_percentage_history):.1f}%')
+    print(f'Tổng thời gian trung bình: {sum(total_time_history)/len(total_time_history):.4f}s')

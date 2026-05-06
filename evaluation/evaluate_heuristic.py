@@ -4,7 +4,7 @@ import time
 import resource
 
 
-EXECUTABLE = "linear programming/guided-local-search.py"
+EXECUTABLE = "q learning/double_q_learning.py"
 DATA_DIR = "data" 
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 1024
@@ -42,9 +42,16 @@ def run_testcase(test_file):
         elapsed_time = time.perf_counter() - start_time
         
         if process.returncode == 0:
-            status = "✅ AC"
-            heuristic_value = float(process.stdout.strip())
-            gap = (heuristic_value - optimal_value) / optimal_value * 100 if optimal_value > 0 else 0
+            out_str = process.stdout.strip()
+
+            heuristic_value = float(out_str)
+            
+            if heuristic_value == -1.0:
+                status = "❌ No Solution"
+                gap = None 
+            else:
+                status = "✅ AC"
+                gap = (heuristic_value - optimal_value) / optimal_value * 100 if optimal_value > 0 else 0
 
         else:
             status = f"🔴 RE/MLE"

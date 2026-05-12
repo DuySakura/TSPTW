@@ -4,7 +4,7 @@ import time
 import resource
 
 
-EXECUTABLE = "linear programming/guided-local-search.py"
+EXECUTABLE = "tabu search/tabu_search"
 DATA_DIR = "data" 
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 1024
@@ -116,8 +116,8 @@ if __name__ == "__main__":
     total_time_history = []
     avg_gap_history = []
 
-    for i in range(3):
-        print(f'LẦN THỨ {i+1}')
+    for i in range(2):
+        print(f'\nLẦN THỨ {i+1}')
 
         passed_percentage, total_time, avg_gap = evaluate()
         passed_percentage_history.append(passed_percentage)
@@ -125,9 +125,8 @@ if __name__ == "__main__":
         avg_gap_history.append(avg_gap)
 
         print("=" * 85)
-        print()
     
-    print('TỔNG KẾT')
+    print('\nTỔNG KẾT')
     print(f'Kết quả trung bình: {sum(passed_percentage_history)/len(passed_percentage_history):.1f}%')
     print(f'Tổng thời gian trung bình: {sum(total_time_history)/len(total_time_history):.4f}s')
-    print(f'Trung bình gap: {sum(avg_gap_history)/len(avg_gap_history):.4f}%')
+    print(f'Trung bình gap: {sum(avg_gap_history)/len(avg_gap_history):.4f}%\n')

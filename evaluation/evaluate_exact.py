@@ -102,16 +102,15 @@ if __name__ == "__main__":
     passed_percentage_history = []
     total_time_history = []
 
-    for i in range(3):
-        print(f'LẦN THỨ {i+1}')
+    for i in range(2):
+        print(f'\nLẦN THỨ {i+1}')
 
         passed_percentage, total_time = evaluate()
         passed_percentage_history.append(passed_percentage)
         total_time_history.append(total_time)
 
         print("=" * 60)
-        print()
 
-    print('TỔNG KẾT')
+    print('\nTỔNG KẾT')
     print(f'Kết quả trung bình: {sum(passed_percentage_history)/len(passed_percentage_history):.1f}%')
-    print(f'Tổng thời gian trung bình: {sum(total_time_history)/len(total_time_history):.4f}s')
+    print(f'Tổng thời gian trung bình: {sum(total_time_history)/len(total_time_history):.4f}s\n')

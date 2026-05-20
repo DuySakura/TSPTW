@@ -2,39 +2,39 @@
 using namespace std;
 
 int n, pen = 1e6;
-vector<vector<int>> t;
-vector<int> e, l, d;
+vector<vector<double>> t;
+vector<double> e, l, d;
 
 void init() {
-    t.assign(n + 1, vector<int>(n + 1));
+    t.assign(n + 1, vector<double>(n + 1));
     e.resize(n);
     l.resize(n); 
     d.resize(n);
 }
 
-long long cal_cost(const vector<int> &route) {
-    long long cost = t[0][route[0]+1], cur_time = max(t[0][route[0]+1], e[route[0]]) + d[route[0]];
+double cal_cost(const vector<int> &route) {
+    double cost = t[0][route[0]+1], cur_time = max(t[0][route[0]+1], e[route[0]]) + d[route[0]];
 
     for (int i = 1; i < n; ++i) {
         cost += t[route[i-1]+1][route[i]+1];
         if (cur_time > l[route[i]]) cost += pen;
-        cur_time = max(cur_time + t[route[i-1]+1][route[i]+1], (long long)e[route[i]]) + d[route[i]];
+        cur_time = max(cur_time + t[route[i-1]+1][route[i]+1], e[route[i]]) + d[route[i]];
     }
 
     return cost + t[route[n-1]+1][0];
 }
 
-long long solve(int max_iterations = 1000) {
+double solve(int max_iterations = 1000) {
     vector<int> current_route(n);
     for (int i = 0; i < n; ++i) current_route[i] = i;
     sort(current_route.begin(), current_route.end(), [] (const int &a, const int &b) {
         return l[a] < l[b];
     });
     
-    long long current_cost = cal_cost(current_route);
+    double current_cost = cal_cost(current_route);
     
     vector<int> global_best_route = current_route;
-    long long global_best_cost = current_cost;
+    double global_best_cost = current_cost;
 
     vector<vector<int>> tabu_list(n, vector<int>(n, 0));
     int tabu_tenure = 10;
@@ -43,7 +43,7 @@ long long solve(int max_iterations = 1000) {
     uniform_int_distribution<> random_node(0, n - 1);
 
     for (int iter = 1; iter <= max_iterations; ++iter) {
-        long long best_neighbor_cost = 2e18;
+        double best_neighbor_cost = 2e18;
         vector<int> best_neighbor_route;
         int best_swap_u = -1, best_swap_v = -1;
 
@@ -54,7 +54,7 @@ long long solve(int max_iterations = 1000) {
 
             vector<int> neighbor_route = current_route;
             swap(neighbor_route[i], neighbor_route[j]);
-            long long neighbor_cost = cal_cost(neighbor_route);
+            double neighbor_cost = cal_cost(neighbor_route);
 
             int u = neighbor_route[i];
             int v = neighbor_route[j];

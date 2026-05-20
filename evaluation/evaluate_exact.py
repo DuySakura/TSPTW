@@ -4,7 +4,7 @@ import time
 import resource
 
 
-EXECUTABLE = "dp/dp"
+EXECUTABLE = "backtracking/backtracking"
 DATA_DIR = "data" 
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 1024

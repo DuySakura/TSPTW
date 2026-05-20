@@ -7,6 +7,8 @@ def solve(n, e, l, d, t):
     if not solver:
         return
     
+    solver.SetTimeLimit(2000)
+    
     x = np.array([
         [solver.BoolVar(f'x_{i}_{j}') for j in range(n)]
         for i in range(n)
@@ -14,7 +16,7 @@ def solve(n, e, l, d, t):
 
     w = []
     for i in range(n):
-        w.append(solver.IntVar(int(e[i]), int(l[i]), f'w_{i}'))
+        w.append(solver.NumVar(float(e[i]), float(l[i]), f'w_{i}'))
 
     for i in range(n):
         solver.Add(np.sum(x[i, :]) == 1)
@@ -35,7 +37,7 @@ def solve(n, e, l, d, t):
 
     status = solver.Solve()
 
-    if status == pywraplp.Solver.OPTIMAL:
+    if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(solver.Objective().Value())
         # print(n - 1)
 

@@ -7,7 +7,7 @@ def solve(n, e, l, d, t):
     if not solver:
         return
     
-    solver.SetTimeLimit(2000)
+    solver.SetTimeLimit(60000)
     
     x = np.array([
         [solver.BoolVar(f'x_{i}_{j}') for j in range(n)]

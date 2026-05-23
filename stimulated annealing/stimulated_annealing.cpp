@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int n, pen = 1e6;
+int n;
 vector<vector<double>> t;
 vector<double> e, l, d;
 
@@ -12,72 +12,100 @@ void init() {
     d.resize(n);
 }
 
-double cal_cost(const vector<int> &route) {
-    double cost = t[0][route[0]+1], cur_time = max(t[0][route[0]+1], e[route[0]]) + d[route[0]];
+double cal_cost(const vector<int> &route, const double &penalty) {
+    double cost = t[0][route[0]+1];
+    double cur_time = max(t[0][route[0]+1], e[route[0]]);
+    double total_penalty = max(0.0, cur_time - l[route[0]]);
 
     for (int i = 1; i < n; ++i) {
         cost += t[route[i-1]+1][route[i]+1];
-        if (cur_time > l[route[i]]) cost += pen;
-        cur_time = max(cur_time + t[route[i-1]+1][route[i]+1], e[route[i]]) + d[route[i]];
+        cur_time = max(cur_time + d[route[i-1]] + t[route[i-1]+1][route[i]+1], e[route[i]]);
+        total_penalty += max(0.0, cur_time - l[route[i]]);
     }
 
-    return cost + t[route[n-1]+1][0];
+    return cost + t[route[n-1]+1][0] + penalty * total_penalty;
 }
 
-double solve(int max_iterations = 1000) {
-    vector<int> current_route(n);
-    for (int i = 0; i < n; ++i) current_route[i] = i;
-    sort(current_route.begin(), current_route.end(), [] (const int &a, const int &b) {
-        return l[a] < l[b];
-    });
-    
-    double current_cost = cal_cost(current_route);
-    
-    vector<int> global_best_route = current_route;
-    double global_best_cost = current_cost;
+bool is_feasible(const vector<int> &route) {
+    double cur_time = max(t[0][route[0]+1], e[route[0]]);
 
-    double T = 10000.0;       
-    double T_min = 1e-3;      
-    double alpha = 0.99;      
-    int markov_chain = 100;
+    for (int i = 0; i < n - 1; ++i) {
+        if (cur_time > l[route[i]]) return false;
+
+        cur_time = max(cur_time + d[route[i]] + t[route[i]+1][route[i+1]+1], e[route[i+1]]);
+    }
+
+    return cur_time <= l[route[n-1]];
+}
+
+double solve() {
+    double T_start = 10000.0;       
+    double T_min = 1e-3;
+    double T = T_start;
+    double cooling_rate = 0.99;
+    int markov_chain = max(100, 10 * n);
+
+    double penalty_start = 0.1;
+    double penalty_max = 5000.0;
+    double penalty = penalty_start;
 
     mt19937 gen(18);
-    uniform_int_distribution<> random_node(0, n - 1);
+    uniform_int_distribution<> random_idx(0, n - 1);
+    uniform_int_distribution<> random_op(0, 2);
     uniform_real_distribution<> random_prob(0.0, 1.0);
 
+    vector<int> best_route(n);
+    for (int i = 0; i < n; ++i) best_route[i] = i;
+    sort(best_route.begin(), best_route.end(), [] (const int &a, const int &b) {
+        return l[a] < l[b];
+    });
+    double best_cost = cal_cost(best_route, penalty);
+
+    vector<int> current_route = best_route;
+    double current_cost = best_cost;
+
     while (T > T_min) {
+        double progress = log(T_start / T) / log(T_start / T_min);
+        penalty = penalty_start + (penalty_max - penalty_start) * (progress * progress);
+        current_cost = cal_cost(current_route, penalty);
+
         for (int step = 0; step < markov_chain; ++step) {
-            int i = random_node(gen);
-            int j = random_node(gen);
-            if (i == j) continue;
+            int i = random_idx(gen);
+            int j = random_idx(gen);
+            while (i == j) {
+                i = random_idx(gen);
+                j = random_idx(gen);
+            }
 
-            vector<int> neighbor_route = current_route;
-            swap(neighbor_route[i], neighbor_route[j]);
-            double neighbor_cost = cal_cost(neighbor_route);
-            double delta = neighbor_cost - current_cost;
-
-            if (delta < 0) {
-                current_route = neighbor_route;
-                current_cost = neighbor_cost;
-
-                if (current_cost < global_best_cost) {
-                    global_best_cost = current_cost;
-                    global_best_route = current_route;
-                }
-            } 
+            int op = random_op(gen);
+            vector<int> route = current_route;
+            if (op == 0) swap(route[i], route[j]);
+            else if (op == 1) std::reverse(route.begin() + min(i, j), route.begin() + max(i, j) + 1);
             else {
-                double p = exp(-delta / T);
-                if (random_prob(gen) < p) {
-                    current_route = neighbor_route;
-                    current_cost = neighbor_cost;
+                int val = route[i];
+                int pos = (j > i) ? j - 1 : j;
+                route.erase(route.begin() + i);
+                route.insert(route.begin() + pos, val);
+            }
+            double cost = cal_cost(route, penalty);
+            double delta = cost - current_cost;
+
+            if (delta < 0 || random_prob(gen) < exp(-delta / T)) {
+                current_route = route;
+                current_cost = cost;
+
+                if (is_feasible(current_route)) {
+                    if (current_cost < best_cost) {
+                        best_route = current_route;
+                        best_cost = current_cost;
+                    }
                 }
             }
         }
-        
-        T *= alpha; 
+        T *= cooling_rate; 
     }
 
-    return global_best_cost;
+    return best_cost;
 }
 
 int main() {

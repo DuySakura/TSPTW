@@ -39,8 +39,8 @@ def solve(n, e, l, d, t):
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION
     search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-    search_parameters.solution_limit = 100
-    search_parameters.time_limit.seconds = 2
+    search_parameters.solution_limit = 10000
+    search_parameters.time_limit.seconds = 60
 
     solution = routing.SolveWithParameters(search_parameters)
 

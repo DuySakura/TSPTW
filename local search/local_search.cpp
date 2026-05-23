@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-int n, pen = 1e6;
+int n;
 vector<vector<double>> t;
 vector<double> e, l, d;
 
@@ -12,54 +12,93 @@ void init() {
     d.resize(n);
 }
 
-double cal_cost(const vector<int> &route) {
-    double cost = t[0][route[0]+1], cur_time = max(t[0][route[0]+1], e[route[0]]) + d[route[0]];
+double cal_cost(const vector<int> &route, const double &penalty) {
+    double cost = t[0][route[0]+1];
+    double cur_time = max(t[0][route[0]+1], e[route[0]]);
+    double total_penalty = max(0.0, cur_time - l[route[0]]);
 
     for (int i = 1; i < n; ++i) {
         cost += t[route[i-1]+1][route[i]+1];
-        if (cur_time > l[route[i]]) cost += pen;
-        cur_time = max(cur_time + t[route[i-1]+1][route[i]+1], e[route[i]]) + d[route[i]];
+        cur_time = max(cur_time + d[route[i-1]] + t[route[i-1]+1][route[i]+1], e[route[i]]);
+        total_penalty += max(0.0, cur_time - l[route[i]]);
     }
 
-    return cost + t[route[n-1]+1][0];
+    return cost + t[route[n-1]+1][0] + penalty * total_penalty;
 }
 
-double solve(int max_iterations = 1000) {
+bool is_feasible(const vector<int> &route) {
+    double cur_time = max(t[0][route[0]+1], e[route[0]]);
+
+    for (int i = 0; i < n - 1; ++i) {
+        if (cur_time > l[route[i]]) return false;
+
+        cur_time = max(cur_time + d[route[i]] + t[route[i]+1][route[i+1]+1], e[route[i+1]]);
+    }
+
+    return cur_time <= l[route[n-1]];
+}
+
+double solve() {
+    int max_iterations = 100000;
+
+    double penalty = 10;
+    double gamma = 1.2;
+    int feasible_count = 0;
+    int check_period = 50;
+
+    mt19937 gen(18);
+    uniform_int_distribution<> random_idx(0, n - 1);
+    uniform_int_distribution<> random_op(0, 2);
+
     vector<int> best_route(n);
     for (int i = 0; i < n; ++i) best_route[i] = i;
     sort(best_route.begin(), best_route.end(), [] (const int &a, const int &b) {
         return l[a] < l[b];
     });
+    double best_cost = cal_cost(best_route, penalty);
 
-    double best_cost = cal_cost(best_route);
+    vector<int> current_route = best_route;
+    double current_cost = best_cost;
 
-    mt19937 gen(18);
-    uniform_int_distribution<> random(0, n - 1);
+    for (int iter = 1; iter <= max_iterations; ++iter) {
+        if (iter % check_period == 0) {
+            if (feasible_count >= check_period) penalty = max(0.1, penalty / gamma);
+            else penalty = min(100000.0, penalty * gamma);
 
-    while (max_iterations--) {
-        int i = random(gen);
-        int j = random(gen);
-        vector<int> route = best_route;
-        swap(route[i], route[j]);
-        double cost = cal_cost(route);
-
-        if (cost < best_cost) {
-            best_route = route;
-            best_cost = cost;
-            continue;
+            current_cost = cal_cost(current_route, penalty);
+            feasible_count = 0;
         }
 
-        i = random(gen);
-        j = random(gen);
-        route = best_route;
-        int val = route[i];
-        route.erase(route.begin() + i);
-        route.insert(route.begin() + j, val);
-        cost = cal_cost(route);
+        int i = random_idx(gen);
+        int j = random_idx(gen);
+        while (i == j) {
+            i = random_idx(gen);
+            j = random_idx(gen);
+        }
 
-        if (cost < best_cost) {
-            best_route = route;
-            best_cost = cost;
+        int op = random_op(gen);
+        vector<int> route = current_route;
+        if (op == 0) swap(route[i], route[j]);
+        else if (op == 1) std::reverse(route.begin() + min(i, j), route.begin() + max(i, j) + 1);
+        else {
+            int val = route[i];
+            int pos = (j > i) ? j - 1 : j;
+            route.erase(route.begin() + i);
+            route.insert(route.begin() + pos, val);
+        }
+        double cost = cal_cost(route, penalty);
+
+        bool feasible = is_feasible(route);
+
+        if (feasible) ++feasible_count;
+        if (cost < current_cost) {
+            current_route = route;
+            current_cost = cost;
+
+            if (feasible) {
+                best_route = current_route;
+                best_cost = current_cost;
+            }
         }
     }
 

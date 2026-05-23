@@ -9,15 +9,15 @@ import numpy as np
 EXECUTABLES = {
     'MIP': 'linear programming/branch_and_cut.py',
     'CP': 'constrast programming/guided_local_search.py',
-    'Local Search': 'local search/local_search',
-    'Tabu Search': 'tabu search/tabu_search',
-    'Stimulated Annealing': 'stimulated annealing/stimulated_annealing'
+    'LS': 'local search/local_search',
+    'TS': 'tabu search/tabu_search',
+    'SA': 'stimulated annealing/stimulated_annealing'
 }
 
-DATA_DIR = "data"
-TIME_LIMIT_SEC = 2
-MEMORY_LIMIT_MB = 2048
-NUM_RUNS = 2
+DATA_DIR = "data/AFG_converted_travel_time_objective"
+TIME_LIMIT_SEC = 60
+MEMORY_LIMIT_MB = 12 * 1024
+NUM_RUNS = 1
 
 def set_process_limits():
     mem_limit_bytes = MEMORY_LIMIT_MB * 1024 * 1024
@@ -61,6 +61,10 @@ def run_testcase(test_file, executable_path):
             else:
                 status = "✅ AC"
                 gap = (heuristic_value - optimal_value) / optimal_value * 100 if optimal_value > 0 else 0
+
+                if abs(gap) < 1e-9:
+                    gap = 0
+                    
         else:
             status = f"🔴 RE/MLE"
             
@@ -137,7 +141,7 @@ def plot_comparisons(results_data):
     # ---------------------------------------------------------
     plt.figure(figsize=(8, 6))
     bars3 = plt.bar(algorithms, gaps, color=colors)
-    plt.title('Độ lệch tối ưu trung bình - Gap (%)', fontsize=14, fontweight='bold')
+    plt.title('Độ lệch trung bình - Gap (%)', fontsize=14, fontweight='bold')
     plt.ylabel('Độ lệch (%)')
     plt.bar_label(bars3, fmt='%.4f%%', padding=3)
     plt.tight_layout()

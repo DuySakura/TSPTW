@@ -7,7 +7,7 @@ def solve(n, e, l, d, t):
     if not solver:
         return
     
-    solver.SetTimeLimit(60000)
+    solver.SetTimeLimit(55000)
     
     x = np.array([
         [solver.BoolVar(f'x_{i}_{j}') for j in range(n)]
@@ -57,8 +57,8 @@ def solve(n, e, l, d, t):
 if __name__ == "__main__":
     n = int(input())
 
-    tmp = np.array([list(map(int, input().split())) for _ in range(n)])
-    t = np.array([list(map(int, input().split())) for _ in range(n + 1)])
+    tmp = np.array([list(map(float, input().split())) for _ in range(n)])
+    t = np.array([list(map(float, input().split())) for _ in range(n + 1)])
     e = np.insert(tmp[:, 0], 0, 0)
     l = np.insert(tmp[:, 1], 0, np.max(tmp[:, 1]) + np.max(t[:, 0]))
     d = np.insert(tmp[:, 2], 0, 0)

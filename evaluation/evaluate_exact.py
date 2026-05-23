@@ -4,8 +4,8 @@ import time
 import resource
 
 
-EXECUTABLE = "backtracking/backtracking"
-DATA_DIR = "data" 
+EXECUTABLE = 'linear programming/branch_and_cut.py'
+DATA_DIR = 'data/Solomon'
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 1024
 

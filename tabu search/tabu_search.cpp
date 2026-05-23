@@ -39,7 +39,8 @@ bool is_feasible(const vector<int> &route) {
 }
 
 double solve() {
-    int max_iterations = 100000;
+    int max_iterations = 500 * n;
+    auto start_time = chrono::steady_clock::now();
 
     double penalty = 10;
     double gamma = 1.2;
@@ -64,6 +65,10 @@ double solve() {
     int neighborhood_size = min(200, (n * (n - 1)) / 2);
 
     for (int iter = 1; iter <= max_iterations; ++iter) {
+        auto current_time = chrono::steady_clock::now();
+        double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
+        if (elapsed > 55) break;
+
         if (iter % check_period == 0) {
             if (feasible_count >= check_period) penalty = max(0.1, penalty / gamma);
             else penalty = min(100000.0, penalty * gamma);

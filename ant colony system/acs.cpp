@@ -5,15 +5,15 @@ int n;
 vector<vector<double>> t;
 vector<double> e, l, d;
 
-// --- CÁC THAM SỐ CỦA THUẬT TOÁN ACS-TSPTW (Được lấy trực tiếp từ Bài báo) ---
-const int m_ants = 3;               // Số lượng kiến mỗi vòng lặp
-const double q0 = 0.99;             // Tỷ lệ khai thác (Exploitation)
-const double theta_param = 0.1;     // Hệ số bay hơi pheromone toàn cục
-const double omega = 0.1;           // Hệ số bay hơi pheromone cục bộ
-const double beta_param = 0.5;      // Trọng số của heuristic g_ij (Slack time)
-const double gamma_param = 3.0;     // Trọng số của heuristic h_ij (Waiting time)
-const double delta_param = 0.05;    // Độ dốc hàm sigmoid của g_ij
-const double lambda_param = 0.05;   // Độ dốc hàm sigmoid của h_ij
+// --- CÁC THAM SỐ CỦA THUẬT TOÁN ACS-TSPTW ---
+const int m_ants = 3;               
+const double q0 = 0.99;             
+const double theta_param = 0.1;     
+const double omega = 0.1;           
+const double beta_param = 0.5;      
+const double gamma_param = 3.0;     
+const double delta_param = 0.05;    
+const double lambda_param = 0.05;   
 
 void init() {
     t.assign(n + 1, vector<double>(n + 1));
@@ -22,28 +22,57 @@ void init() {
     d.resize(n);
 }
 
-double cal_cost(const vector<int> &route) {
-    double cost = t[0][route[0]];
-    double cur_time = max(t[0][route[0]], e[route[0]-1]);
+// 1. Hàm tính cost TÍCH HỢP HÀM PHẠT
+double cal_cost(const vector<int> &route, double penalty) {
+    if (route.empty()) return 2e18;
+    
+    int first_node = route[0];
+    double cost = t[0][first_node];
+    double cur_time = max(t[0][first_node], e[first_node - 1]);
+    double total_penalty = max(0.0, cur_time - l[first_node - 1]);
 
     for (int i = 1; i < n; ++i) {
-        cost += t[route[i-1]][route[i]];
-        cur_time = max(cur_time + d[route[i-1]-1] + t[route[i-1]][route[i]], e[route[i]-1]);
-
-        if (cur_time > l[route[i]-1]) return 2e18;
+        int prev = route[i-1];
+        int curr = route[i];
+        
+        cost += t[prev][curr];
+        cur_time = max(cur_time + d[prev - 1] + t[prev][curr], e[curr - 1]);
+        
+        total_penalty += max(0.0, cur_time - l[curr - 1]); // Cộng dồn độ trễ
     }
 
-    return cost + t[route[n-1]][0];
+    cost += t[route[n-1]][0]; // Cộng thêm quãng đường quay về kho
+    
+    return cost + penalty * total_penalty;
+}
+
+// 2. Hàm kiểm tra nghiệm khả thi tuyệt đối
+bool is_feasible(const vector<int> &route) {
+    if (route.empty()) return false;
+    
+    int first_node = route[0];
+    double cur_time = max(t[0][first_node], e[first_node - 1]);
+    if (cur_time > l[first_node - 1]) return false;
+
+    for (int i = 1; i < n; ++i) {
+        int prev = route[i-1];
+        int curr = route[i];
+        cur_time = max(cur_time + d[prev - 1] + t[prev][curr], e[curr - 1]);
+        if (cur_time > l[curr - 1]) return false;
+    }
+    return true;
 }
 
 double solve() {
-    int max_iterations = 50000;
+    int max_iterations = 50 * n;
+    auto start_time = chrono::steady_clock::now();
+
+    double penalty = 100.0; // Hệ số phạt cố định đủ lớn để ép kiến tìm đường đúng
     
-    // 1. Khởi tạo Pheromone ban đầu (tau_0) bằng Nearest Neighbor
+    // Khởi tạo Pheromone ban đầu (tau_0) bằng Nearest Neighbor
     double L_NN = 0;
     vector<bool> visited(n + 1, false);
     int curr = 0;
-    double cur_time = 0;
     for (int step = 0; step < n; ++step) {
         int best_next = -1;
         double min_dist = 1e9;
@@ -64,23 +93,26 @@ double solve() {
 
     // Biến lưu kỷ lục toàn cục
     vector<int> global_best_route;
-    double global_best_cost = 2e18;
+    double global_best_cost = 2e18;             // Chứa nghiệm phạt (để rải Pheromone)
+    double true_best_feasible_cost = 2e18;      // Chứa nghiệm hợp lệ (để in kết quả)
 
     mt19937 gen(18);
     uniform_real_distribution<> random_prob(0.0, 1.0);
 
     for (int iter = 1; iter <= max_iterations; ++iter) {
+        auto current_time = chrono::steady_clock::now();
+        double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
+        if (elapsed > 55) break;
+        
         vector<int> iteration_best_route;
         double iteration_best_cost = 2e18;
 
-        // Cho từng con kiến xây dựng hành trình
         for (int k = 0; k < m_ants; ++k) {
             vector<int> route;
             vector<bool> unvisited(n + 1, true);
             unvisited[0] = false;
             int current_node = 0;
             double current_time = 0;
-            bool is_feasible = true;
 
             for (int step = 0; step < n; ++step) {
                 vector<int> N_i;
@@ -88,7 +120,6 @@ double solve() {
                 double sum_G = 0, sum_H = 0;
                 int count_G = 0, count_H = 0;
 
-                // Tính toán G_ij và H_ij cho tất cả đỉnh chưa thăm
                 for (int j = 1; j <= n; ++j) {
                     if (unvisited[j]) {
                         double service_time = (current_node == 0) ? 0 : d[current_node - 1];
@@ -106,12 +137,6 @@ double solve() {
                     }
                 }
 
-                if (count_G == 0) {
-                    // Tất cả các đỉnh đều vi phạm thời gian -> Kiến bỏ cuộc (Theo bài báo)
-                    is_feasible = false;
-                    break;
-                }
-
                 double mu = (count_G > 0) ? (sum_G / count_G) : 0;
                 double nu = (count_H > 0) ? (sum_H / count_H) : 0;
 
@@ -120,12 +145,15 @@ double solve() {
                 int best_j = -1;
                 double max_eval = -1;
 
-                // Tính toán g_ij, h_ij và biểu thức trạng thái
+                // 3. Ép kiến đi tiếp dù count_G == 0
                 for (size_t idx = 0; idx < N_i.size(); ++idx) {
                     int j = N_i[idx];
-                    double g_ij = 0, h_ij = 1.0;
+                    
+                    // Fallback: nếu chết hết, trả g_ij = 1.0 để dùng Pheromone thuần túy dẫn đường
+                    double g_ij = (count_G == 0) ? 1.0 : 0.0; 
+                    double h_ij = 1.0;
 
-                    if (G_val[idx] >= 0) {
+                    if (count_G > 0 && G_val[idx] >= 0) {
                         g_ij = 1.0 / (1.0 + exp(delta_param * (G_val[idx] - mu)));
                     }
                     if (H_val[idx] > 0) {
@@ -142,54 +170,58 @@ double solve() {
                     }
                 }
 
-                // Chọn đỉnh tiếp theo (Exploitation vs Exploration)
                 int next_node = -1;
                 double q = random_prob(gen);
                 
                 if (q <= q0) {
-                    next_node = best_j; // Khai thác
+                    next_node = best_j; 
                 } else {
-                    // Khám phá bằng Vòng quay Roulette
-                    double rand_val = random_prob(gen) * prob_sum;
-                    double cumulative = 0;
-                    for (size_t idx = 0; idx < N_i.size(); ++idx) {
-                        cumulative += prob[idx];
-                        if (cumulative >= rand_val) {
-                            next_node = N_i[idx];
-                            break;
+                    if (prob_sum > 0) {
+                        double rand_val = random_prob(gen) * prob_sum;
+                        double cumulative = 0;
+                        for (size_t idx = 0; idx < N_i.size(); ++idx) {
+                            cumulative += prob[idx];
+                            if (cumulative >= rand_val) {
+                                next_node = N_i[idx];
+                                break;
+                            }
                         }
                     }
                     if (next_node == -1) next_node = N_i.back();
                 }
 
-                // Cập nhật trạng thái
                 route.push_back(next_node);
                 unvisited[next_node] = false;
                 
                 double s_time = (current_node == 0) ? 0 : d[current_node-1];
                 current_time = max(current_time + s_time + t[current_node][next_node], e[next_node-1]);
                 
-                // Cập nhật Pheromone cục bộ (Local Updating Rule)
                 tau[current_node][next_node] = (1.0 - omega) * tau[current_node][next_node] + omega * tau_0;
                 current_node = next_node;
             }
 
-            if (is_feasible) {
-                double cost = cal_cost(route);
-                if (cost < iteration_best_cost) {
-                    iteration_best_cost = cost;
-                    iteration_best_route = route;
+            // 4. Đánh giá nghiệm phạt để rải Pheromone
+            double penalized_cost = cal_cost(route, penalty);
+            if (penalized_cost < iteration_best_cost) {
+                iteration_best_cost = penalized_cost;
+                iteration_best_route = route;
+            }
+
+            // 5. Đánh giá nghiệm khả thi tuyệt đối
+            if (is_feasible(route)) {
+                double true_cost = cal_cost(route, 0.0);
+                if (true_cost < true_best_feasible_cost) {
+                    true_best_feasible_cost = true_cost;
                 }
             }
         } // Kết thúc 1 vòng lặp của m kiến
 
-        // Cập nhật Pheromone toàn cục (Global Updating Rule)
         if (iteration_best_cost < global_best_cost) {
             global_best_cost = iteration_best_cost;
             global_best_route = iteration_best_route;
         }
 
-        // Chỉ cập nhật pheromone cho hành trình TỐT NHẤT TOÀN CỤC (Theo quy tắc ACS)
+        // Rải Pheromone TOÀN CỤC dựa trên lộ trình tốt nhất (dù nó có trễ giờ đi nữa)
         if (global_best_cost != 2e18) {
             int prev = 0;
             for (int i = 0; i < n; ++i) {
@@ -201,7 +233,8 @@ double solve() {
         }
     }
 
-    return global_best_cost;
+    // 6. Trả về nghiệm tốt nhất Khả thi nếu có, không thì trả về nghiệm Phạt tốt nhất
+    return (true_best_feasible_cost != 2e18) ? true_best_feasible_cost : global_best_cost;
 }
 
 int main() {

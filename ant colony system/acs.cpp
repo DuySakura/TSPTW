@@ -23,18 +23,17 @@ void init() {
 }
 
 double cal_cost(const vector<int> &route) {
-    double cost = t[0][route[0]+1];
-    double cur_time = max(t[0][route[0]+1], e[route[0]]);
-    double total_penalty = max(0.0, cur_time - l[route[0]]);
+    double cost = t[0][route[0]];
+    double cur_time = max(t[0][route[0]], e[route[0]-1]);
 
     for (int i = 1; i < n; ++i) {
-        cost += t[route[i-1]+1][route[i]+1];
-        cur_time = max(cur_time + d[route[i-1]] + t[route[i-1]+1][route[i]+1], e[route[i]]);
+        cost += t[route[i-1]][route[i]];
+        cur_time = max(cur_time + d[route[i-1]-1] + t[route[i-1]][route[i]], e[route[i]-1]);
 
-        if (cur_time > l[route[i]]) return 2e18;
+        if (cur_time > l[route[i]-1]) return 2e18;
     }
 
-    return cost + t[route[n-1]+1][0];
+    return cost + t[route[n-1]][0];
 }
 
 double solve() {

@@ -15,7 +15,7 @@ EXECUTABLES = {
     'ACS': 'ant colony system/acs'
 }
 
-DATA_DIR = "data/AFG_converted_travel_time_objective"
+DATA_DIR = "data/Dumas"
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 8 * 1024
 NUM_RUNS = 1

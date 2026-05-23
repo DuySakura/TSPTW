@@ -11,12 +11,13 @@ EXECUTABLES = {
     'CP': 'constrast programming/guided_local_search.py',
     'LS': 'local search/local_search',
     'TS': 'tabu search/tabu_search',
-    'SA': 'stimulated annealing/stimulated_annealing'
+    'SA': 'stimulated annealing/stimulated_annealing',
+    'ACS': 'ant colony system/acs'
 }
 
 DATA_DIR = "data/AFG_converted_travel_time_objective"
 TIME_LIMIT_SEC = 60
-MEMORY_LIMIT_MB = 12 * 1024
+MEMORY_LIMIT_MB = 8 * 1024
 NUM_RUNS = 1
 
 def set_process_limits():
@@ -111,7 +112,10 @@ def plot_comparisons(results_data):
     gaps = [results_data[algo]['gap'] for algo in algorithms]
     colors = plt.cm.viridis(np.linspace(0.2, 0.8, len(algorithms)))
 
-    os.makedirs('evaluation/results', exist_ok=True)
+    dataset_name = os.path.basename(os.path.normpath(DATA_DIR))
+    save_dir = os.path.join('evaluation', 'results', dataset_name)
+
+    os.makedirs(save_dir, exist_ok=True)
 
     # ---------------------------------------------------------
     # ĐỒ THỊ 1: TỶ LỆ VƯỢT QUA TESTCASE
@@ -123,7 +127,7 @@ def plot_comparisons(results_data):
     plt.ylabel('Phần trăm (%)')
     plt.bar_label(bars1, fmt='%.1f%%', padding=3)
     plt.tight_layout()
-    plt.savefig('evaluation/results/chart_pass_rate.png', dpi=300) 
+    plt.savefig(os.path.join(save_dir, 'chart_pass_rate.png'), dpi=300) 
 
     # ---------------------------------------------------------
     # ĐỒ THỊ 2: TỔNG THỜI GIAN CHẠY
@@ -134,18 +138,18 @@ def plot_comparisons(results_data):
     plt.ylabel('Giây (s)')
     plt.bar_label(bars2, fmt='%.4fs', padding=3)
     plt.tight_layout()
-    plt.savefig('evaluation/results/chart_time.png', dpi=300)
+    plt.savefig(os.path.join(save_dir, 'chart_time.png'), dpi=300)
 
     # ---------------------------------------------------------
     # ĐỒ THỊ 3: ĐỘ LỆCH TRUNG BÌNH (GAP)
     # ---------------------------------------------------------
     plt.figure(figsize=(8, 6))
     bars3 = plt.bar(algorithms, gaps, color=colors)
-    plt.title('Độ lệch trung bình - Gap (%)', fontsize=14, fontweight='bold')
+    plt.title('Độ lệch trung bình (%)', fontsize=14, fontweight='bold')
     plt.ylabel('Độ lệch (%)')
     plt.bar_label(bars3, fmt='%.4f%%', padding=3)
     plt.tight_layout()
-    plt.savefig('evaluation/results/chart_gap.png', dpi=300)
+    plt.savefig(os.path.join(save_dir, 'chart_gap.png'), dpi=300)
 
 if __name__ == "__main__":
     if not os.path.exists(DATA_DIR) or not os.listdir(DATA_DIR):

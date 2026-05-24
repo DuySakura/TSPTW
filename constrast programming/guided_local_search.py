@@ -67,8 +67,8 @@ def solve(n, e, l, d, t):
 if __name__ == "__main__":
     n = int(input())
 
-    tmp = [list(map(float, input().split())) for _ in range(n)]
-    t = [list(map(float, input().split())) for _ in range(n + 1)]
+    tmp = [list(map(int, input().split())) for _ in range(n)]
+    t = [list(map(int, input().split())) for _ in range(n + 1)]
     e = [0] + [row[0] for row in tmp]
     l = [max(row[1] for row in tmp) + max(row[0] for row in t)] + [row[1] for row in tmp]
     d = [0] + [row[2] for row in tmp]

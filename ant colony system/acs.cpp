@@ -64,7 +64,8 @@ bool is_feasible(const vector<int> &route) {
 }
 
 double solve() {
-    int max_iterations = 50 * n;
+    int no_improve = 0;
+    int max_no_improve = 50 * n;
     auto start_time = chrono::steady_clock::now();
 
     double penalty = 100.0; // Hệ số phạt cố định đủ lớn để ép kiến tìm đường đúng
@@ -99,7 +100,9 @@ double solve() {
     mt19937 gen(18);
     uniform_real_distribution<> random_prob(0.0, 1.0);
 
-    for (int iter = 1; iter <= max_iterations; ++iter) {
+    for (int iter = 1; ; ++iter) {
+        if (no_improve > max_no_improve) break;
+        
         auto current_time = chrono::steady_clock::now();
         double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
         if (elapsed > 55) break;
@@ -219,7 +222,9 @@ double solve() {
         if (iteration_best_cost < global_best_cost) {
             global_best_cost = iteration_best_cost;
             global_best_route = iteration_best_route;
+            no_improve = 0;
         }
+        else ++no_improve;
 
         // Rải Pheromone TOÀN CỤC dựa trên lộ trình tốt nhất (dù nó có trễ giờ đi nữa)
         if (global_best_cost != 2e18) {

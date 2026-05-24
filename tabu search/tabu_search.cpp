@@ -39,7 +39,8 @@ bool is_feasible(const vector<int> &route) {
 }
 
 double solve() {
-    int max_iterations = 500 * n;
+    int no_improve = 0;
+    int max_no_improve = 1000 * n;
     auto start_time = chrono::steady_clock::now();
 
     double penalty = 10;
@@ -64,7 +65,9 @@ double solve() {
     vector<vector<int>> tabu_list(n, vector<int>(n, 0));
     int neighborhood_size = min(200, (n * (n - 1)) / 2);
 
-    for (int iter = 1; iter <= max_iterations; ++iter) {
+    for (int iter = 1; ; ++iter) {
+        if (no_improve > max_no_improve) break;
+        
         auto current_time = chrono::steady_clock::now();
         double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
         if (elapsed > 55) break;
@@ -121,6 +124,7 @@ double solve() {
         tabu_list[best_swap_u][best_swap_v] = iter + tenure;
         tabu_list[best_swap_v][best_swap_u] = iter + tenure;
 
+        bool improve = false;
         bool feasible = is_feasible(best_neighbor_route);
 
         if (feasible) ++feasible_count;
@@ -131,8 +135,12 @@ double solve() {
             if (feasible) {
                 best_route = current_route;
                 best_cost = current_cost;
+                improve = true;
             }
         }
+
+        if (improve) no_improve = 0;
+        else ++no_improve;
     }
 
     return best_cost;

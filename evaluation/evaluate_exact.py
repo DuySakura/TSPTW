@@ -4,10 +4,10 @@ import time
 import resource
 
 
-EXECUTABLE = 'linear programming/branch_and_cut.py'
-DATA_DIR = 'data/Solomon'
+EXECUTABLE = 'constrast programming/guided_local_search.py'
+DATA_DIR = 'data/Dumas'
 TIME_LIMIT_SEC = 60
-MEMORY_LIMIT_MB = 1024
+MEMORY_LIMIT_MB = 1024 * 8
 
 def set_process_limits():
     mem_limit_bytes = MEMORY_LIMIT_MB * 1024 * 1024
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     passed_percentage_history = []
     total_time_history = []
 
-    for i in range(2):
+    for i in range(1):
         print(f'\nLẦN THỨ {i+1}')
 
         passed_percentage, total_time = evaluate()

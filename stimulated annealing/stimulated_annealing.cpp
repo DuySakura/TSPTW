@@ -39,7 +39,10 @@ bool is_feasible(const vector<int> &route) {
 }
 
 double solve() {
-    double T_start = 1000 * n;       
+    int no_improve = 0;
+    int max_no_improve = 100 * n;
+
+    double T_start = 5000 * n;      
     double T_min = 1e-3;
     double T = T_start;
     double cooling_rate = 0.99;
@@ -67,13 +70,17 @@ double solve() {
     double current_cost = best_cost;
 
     while (T > T_min) {
+        if (no_improve > max_no_improve) break;
+        
         auto current_time = chrono::steady_clock::now();
         double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
         if (elapsed > 55) break;
-        
+
         double progress = log(T_start / T) / log(T_start / T_min);
         penalty = penalty_start + (penalty_max - penalty_start) * (progress * progress);
         current_cost = cal_cost(current_route, penalty);
+
+        bool improve = false;
 
         for (int step = 0; step < markov_chain; ++step) {
             int i = random_idx(gen);
@@ -104,10 +111,15 @@ double solve() {
                     if (current_cost < best_cost) {
                         best_route = current_route;
                         best_cost = current_cost;
+                        improve = true;
                     }
                 }
             }
         }
+
+        if (improve) no_improve = 0;
+        else ++no_improve;
+
         T *= cooling_rate; 
     }
 

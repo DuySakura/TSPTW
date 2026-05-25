@@ -12,7 +12,7 @@ void init() {
     d.resize(n);
 }
 
-double cal_cost(const vector<int> &route, const double &penalty) {
+double cal_cost(const vector<int> &route, const double &alpha) {
     double cost = t[0][route[0]+1];
     double cur_time = max(t[0][route[0]+1], e[route[0]]);
     double total_penalty = max(0.0, cur_time - l[route[0]]);
@@ -23,7 +23,7 @@ double cal_cost(const vector<int> &route, const double &penalty) {
         total_penalty += max(0.0, cur_time - l[route[i]]);
     }
 
-    return cost + t[route[n-1]+1][0] + penalty * total_penalty;
+    return cost + t[route[n-1]+1][0] + alpha * total_penalty;
 }
 
 bool is_feasible(const vector<int> &route) {
@@ -43,7 +43,7 @@ double solve() {
     int max_no_improve = 1000 * n;
     auto start_time = chrono::steady_clock::now();
 
-    double penalty = 10;
+    double alpha = 10;
     double gamma = 1.2;
     int feasible_count = 0;
     int check_period = 50;
@@ -57,7 +57,7 @@ double solve() {
     sort(best_route.begin(), best_route.end(), [] (const int &a, const int &b) {
         return l[a] < l[b];
     });
-    double best_cost = cal_cost(best_route, penalty);
+    double best_cost = cal_cost(best_route, alpha);
 
     vector<int> current_route = best_route;
     double current_cost = best_cost;
@@ -73,10 +73,10 @@ double solve() {
         if (elapsed > 55) break;
 
         if (iter % check_period == 0) {
-            if (feasible_count >= check_period) penalty = max(0.1, penalty / gamma);
-            else penalty = min(100000.0, penalty * gamma);
+            if (feasible_count >= check_period) alpha = max(0.1, alpha / gamma);
+            else alpha = min(100000.0, alpha * gamma);
 
-            current_cost = cal_cost(current_route, penalty);
+            current_cost = cal_cost(current_route, alpha);
             feasible_count = 0;
         }
 
@@ -94,7 +94,7 @@ double solve() {
 
             vector<int> route = current_route;
             swap(route[i], route[j]);
-            double cost = cal_cost(route, penalty);
+            double cost = cal_cost(route, alpha);
 
             int u = route[i];
             int v = route[j];

@@ -23,7 +23,7 @@ void init() {
 }
 
 // 1. Hàm tính cost TÍCH HỢP HÀM PHẠT
-double cal_cost(const vector<int> &route, double penalty) {
+double cal_cost(const vector<int> &route, double alpha) {
     if (route.empty()) return 2e18;
     
     int first_node = route[0];
@@ -43,7 +43,7 @@ double cal_cost(const vector<int> &route, double penalty) {
 
     cost += t[route[n-1]][0]; // Cộng thêm quãng đường quay về kho
     
-    return cost + penalty * total_penalty;
+    return cost + alpha * total_penalty;
 }
 
 // 2. Hàm kiểm tra nghiệm khả thi tuyệt đối
@@ -68,7 +68,7 @@ double solve() {
     int max_no_improve = 50 * n;
     auto start_time = chrono::steady_clock::now();
 
-    double penalty = 100.0; // Hệ số phạt cố định đủ lớn để ép kiến tìm đường đúng
+    double alpha = 100.0; // Hệ số phạt cố định đủ lớn để ép kiến tìm đường đúng
     
     // Khởi tạo Pheromone ban đầu (tau_0) bằng Nearest Neighbor
     double L_NN = 0;
@@ -204,7 +204,7 @@ double solve() {
             }
 
             // 4. Đánh giá nghiệm phạt để rải Pheromone
-            double penalized_cost = cal_cost(route, penalty);
+            double penalized_cost = cal_cost(route, alpha);
             if (penalized_cost < iteration_best_cost) {
                 iteration_best_cost = penalized_cost;
                 iteration_best_route = route;

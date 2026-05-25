@@ -12,7 +12,7 @@ void init() {
     d.resize(n);
 }
 
-double cal_cost(const vector<int> &route, const double &penalty) {
+double cal_cost(const vector<int> &route, const double &alpha) {
     double cost = t[0][route[0]+1];
     double cur_time = max(t[0][route[0]+1], e[route[0]]);
     double total_penalty = max(0.0, cur_time - l[route[0]]);
@@ -23,7 +23,7 @@ double cal_cost(const vector<int> &route, const double &penalty) {
         total_penalty += max(0.0, cur_time - l[route[i]]);
     }
 
-    return cost + t[route[n-1]+1][0] + penalty * total_penalty;
+    return cost + t[route[n-1]+1][0] + alpha * total_penalty;
 }
 
 bool is_feasible(const vector<int> &route) {
@@ -50,9 +50,9 @@ double solve() {
 
     auto start_time = chrono::steady_clock::now();
 
-    double penalty_start = 0.1;
-    double penalty_max = 5000.0;
-    double penalty = penalty_start;
+    double alpha_start = 0.1;
+    double alpha_max = 5000.0;
+    double alpha = alpha_start;
 
     mt19937 gen(18);
     uniform_int_distribution<> random_idx(0, n - 1);
@@ -64,7 +64,7 @@ double solve() {
     sort(best_route.begin(), best_route.end(), [] (const int &a, const int &b) {
         return l[a] < l[b];
     });
-    double best_cost = cal_cost(best_route, penalty);
+    double best_cost = cal_cost(best_route, alpha);
 
     vector<int> current_route = best_route;
     double current_cost = best_cost;
@@ -77,8 +77,8 @@ double solve() {
         if (elapsed > 55) break;
 
         double progress = log(T_start / T) / log(T_start / T_min);
-        penalty = penalty_start + (penalty_max - penalty_start) * (progress * progress);
-        current_cost = cal_cost(current_route, penalty);
+        alpha = alpha_start + (alpha_max - alpha_start) * (progress * progress);
+        current_cost = cal_cost(current_route, alpha);
 
         bool improve = false;
 
@@ -100,7 +100,7 @@ double solve() {
                 route.erase(route.begin() + i);
                 route.insert(route.begin() + pos, val);
             }
-            double cost = cal_cost(route, penalty);
+            double cost = cal_cost(route, alpha);
             double delta = cost - current_cost;
 
             if (delta < 0 || random_prob(gen) < exp(-delta / T)) {

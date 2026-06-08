@@ -70,7 +70,7 @@ double solve() {
         if (elapsed > 55) break;
 
         if (iter % check_period == 0) {
-            if (feasible_count >= check_period) alpha = max(0.1, alpha / gamma);
+            if (feasible_count >= 0.3 * check_period) alpha = max(0.1, alpha / gamma);
             else alpha = min(100000.0, alpha * gamma);
 
             current_cost = cal_cost(current_route, alpha);

@@ -50,7 +50,7 @@ double solve() {
 
     mt19937 gen(18);
     uniform_int_distribution<> random_idx(0, n - 1);
-    uniform_int_distribution<> random_tenure(5, 15);
+    uniform_int_distribution<> random_tenure(n/10, n/4);
 
     vector<int> best_route(n);
     for (int i = 0; i < n; ++i) best_route[i] = i;
@@ -73,7 +73,7 @@ double solve() {
         if (elapsed > 55) break;
 
         if (iter % check_period == 0) {
-            if (feasible_count >= check_period) alpha = max(0.1, alpha / gamma);
+            if (feasible_count >= 0.4 * check_period) alpha = max(0.1, alpha / gamma);
             else alpha = min(100000.0, alpha * gamma);
 
             current_cost = cal_cost(current_route, alpha);
@@ -128,15 +128,10 @@ double solve() {
         bool feasible = is_feasible(best_neighbor_route);
 
         if (feasible) ++feasible_count;
-        if (best_neighbor_cost < current_cost) {
-            current_route = best_neighbor_route;
-            current_cost = best_neighbor_cost;
-
-            if (feasible) {
-                best_route = current_route;
-                best_cost = current_cost;
-                improve = true;
-            }
+        if (best_neighbor_cost < best_cost && feasible) {
+            best_route = current_route;
+            best_cost = current_cost;
+            improve = true;
         }
 
         if (improve) no_improve = 0;

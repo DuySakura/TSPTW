@@ -70,7 +70,13 @@ double solve() {
     double current_cost = best_cost;
 
     while (T > T_min) {
-        if (no_improve > max_no_improve) break;
+        if (no_improve > max_no_improve) {
+            T = T_start * 0.5;
+            alpha = max(alpha_start, alpha * 0.5);
+            no_improve = 0;
+            current_route = best_route;
+            current_cost = best_cost;
+        }
         
         auto current_time = chrono::steady_clock::now();
         double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();

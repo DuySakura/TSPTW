@@ -5,15 +5,14 @@ int n;
 vector<vector<double>> t;
 vector<double> e, l, d;
 
-// --- CÁC THAM SỐ CỦA THUẬT TOÁN ACS-TSPTW ---
-const int m_ants = 3;               
-const double q0 = 0.99;             
-const double theta_param = 0.1;     
+const int m_ants = 10;
+const double q0 = 0.9;
+const double theta = 0.1;     
 const double omega = 0.1;           
-const double beta_param = 0.5;      
-const double gamma_param = 3.0;     
-const double delta_param = 0.05;    
-const double lambda_param = 0.05;   
+const double beta_param = 5.0;
+const double gamma_param = 5.0;
+const double delta = 0.05;    
+const double lambda = 0.05;   
 
 void init() {
     t.assign(n + 1, vector<double>(n + 1));
@@ -22,7 +21,6 @@ void init() {
     d.resize(n);
 }
 
-// 1. Hàm tính cost TÍCH HỢP HÀM PHẠT
 double cal_cost(const vector<int> &route, double alpha) {
     if (route.empty()) return 2e18;
     
@@ -32,21 +30,38 @@ double cal_cost(const vector<int> &route, double alpha) {
     double total_penalty = max(0.0, cur_time - l[first_node - 1]);
 
     for (int i = 1; i < n; ++i) {
-        int prev = route[i-1];
-        int curr = route[i];
+        int prev = route[i - 1];
+        int cur = route[i];
         
-        cost += t[prev][curr];
-        cur_time = max(cur_time + d[prev - 1] + t[prev][curr], e[curr - 1]);
+        cost += t[prev][cur];
+        cur_time = max(cur_time + d[prev - 1] + t[prev][cur], e[cur - 1]);
         
-        total_penalty += max(0.0, cur_time - l[curr - 1]); // Cộng dồn độ trễ
+        total_penalty += max(0.0, cur_time - l[cur - 1]);
     }
 
-    cost += t[route[n-1]][0]; // Cộng thêm quãng đường quay về kho
+    cost += t[route[n-1]][0];
     
     return cost + alpha * total_penalty;
 }
 
-// 2. Hàm kiểm tra nghiệm khả thi tuyệt đối
+double cal_penalty(vector<int>& route) {
+    if (route.empty()) return 2e18;
+
+    int first_node = route[0];
+    double cur_time = max(t[0][first_node], e[first_node - 1]);
+    double penalty = max(0.0, cur_time - l[first_node - 1]);
+
+    for (int i = 1; i < n; ++i) {
+        int prev = route[i - 1];
+        int cur = route[i];
+
+        cur_time = max(cur_time + d[prev - 1] + t[prev][cur], e[cur - 1]);
+        penalty += max(0.0, cur_time - l[cur - 1]);
+    }
+
+    return penalty;
+}
+
 bool is_feasible(const vector<int> &route) {
     if (route.empty()) return false;
     
@@ -63,14 +78,64 @@ bool is_feasible(const vector<int> &route) {
     return true;
 }
 
+bool repair_route(vector<int>& route) {
+    bool improvement = true;
+    int max_repair_iters = 100;
+    int iters = 0;
+
+    double current_penalty = cal_penalty(route); 
+    
+    if (current_penalty == 0) return true;
+
+    while (improvement && current_penalty > 0 && iters < max_repair_iters) {
+        improvement = false;
+        iters++;
+
+        int best_i = -1, best_pos = -1;
+        double best_penalty = current_penalty;
+        vector<int> best_repaired_route = route;
+
+        for (int i = 0; i < n; ++i) {
+            for (int pos = 0; pos < n; ++pos) {
+                if (i == pos) continue;
+
+                vector<int> temp_route = route;
+                int val = temp_route[i];
+                temp_route.erase(temp_route.begin() + i);
+                int insert_pos = (pos > i) ? pos - 1 : pos;
+                temp_route.insert(temp_route.begin() + insert_pos, val);
+
+                double temp_penalty = cal_penalty(temp_route);
+                
+                if (temp_penalty < best_penalty) {
+                    best_penalty = temp_penalty;
+                    best_i = i;
+                    best_pos = pos;
+                    best_repaired_route = temp_route;
+                }
+            }
+        }
+
+        if (best_penalty < current_penalty) {
+            route = best_repaired_route;
+            current_penalty = best_penalty;
+            improvement = true;
+        }
+    }
+
+    return (current_penalty == 0);
+}
+
 double solve() {
     int no_improve = 0;
     int max_no_improve = 50 * n;
     auto start_time = chrono::steady_clock::now();
 
-    double alpha = 100.0; // Hệ số phạt cố định đủ lớn để ép kiến tìm đường đúng
+    double alpha = 10;
+    double gamma = 1.2;
+    int feasible_count = 0;
+    int check_period = 20;
     
-    // Khởi tạo Pheromone ban đầu (tau_0) bằng Nearest Neighbor
     double L_NN = 0;
     vector<bool> visited(n + 1, false);
     int curr = 0;
@@ -92,10 +157,9 @@ double solve() {
     double tau_0 = 1.0 / (n * L_NN);
     vector<vector<double>> tau(n + 1, vector<double>(n + 1, tau_0));
 
-    // Biến lưu kỷ lục toàn cục
     vector<int> global_best_route;
-    double global_best_cost = 2e18;             // Chứa nghiệm phạt (để rải Pheromone)
-    double true_best_feasible_cost = 2e18;      // Chứa nghiệm hợp lệ (để in kết quả)
+    double global_best_cost = 2e18;
+    double true_best_feasible_cost = 2e18;
 
     mt19937 gen(18);
     uniform_real_distribution<> random_prob(0.0, 1.0);
@@ -106,6 +170,16 @@ double solve() {
         auto current_time = chrono::steady_clock::now();
         double elapsed = chrono::duration_cast<chrono::seconds>(current_time - start_time).count();
         if (elapsed > 55) break;
+
+        if (iter % check_period == 0) {
+            if (feasible_count >= 0.2 * check_period) alpha = max(0.1, alpha / gamma);
+            else alpha = min(10000.0, alpha * gamma);
+
+            feasible_count = 0;
+            if (!global_best_route.empty()) {
+                global_best_cost = cal_cost(global_best_route, alpha);
+            }
+        }
         
         vector<int> iteration_best_route;
         double iteration_best_cost = 2e18;
@@ -148,19 +222,17 @@ double solve() {
                 int best_j = -1;
                 double max_eval = -1;
 
-                // 3. Ép kiến đi tiếp dù count_G == 0
                 for (size_t idx = 0; idx < N_i.size(); ++idx) {
                     int j = N_i[idx];
                     
-                    // Fallback: nếu chết hết, trả g_ij = 1.0 để dùng Pheromone thuần túy dẫn đường
                     double g_ij = (count_G == 0) ? 1.0 : 0.0; 
                     double h_ij = 1.0;
 
                     if (count_G > 0 && G_val[idx] >= 0) {
-                        g_ij = 1.0 / (1.0 + exp(delta_param * (G_val[idx] - mu)));
+                        g_ij = 1.0 / (1.0 + exp(delta * (G_val[idx] - mu)));
                     }
                     if (H_val[idx] > 0) {
-                        h_ij = 1.0 / (1.0 + exp(lambda_param * (H_val[idx] - nu)));
+                        h_ij = 1.0 / (1.0 + exp(lambda * (H_val[idx] - nu)));
                     }
 
                     double eval = tau[current_node][j] * pow(g_ij, beta_param) * pow(h_ij, gamma_param);
@@ -203,21 +275,25 @@ double solve() {
                 current_node = next_node;
             }
 
-            // 4. Đánh giá nghiệm phạt để rải Pheromone
+            bool feasible = is_feasible(route);
+
+            if (!feasible) feasible = repair_route(route);
+
             double penalized_cost = cal_cost(route, alpha);
             if (penalized_cost < iteration_best_cost) {
                 iteration_best_cost = penalized_cost;
                 iteration_best_route = route;
             }
 
-            // 5. Đánh giá nghiệm khả thi tuyệt đối
-            if (is_feasible(route)) {
+            if (feasible) {
+                feasible_count++;
+
                 double true_cost = cal_cost(route, 0.0);
                 if (true_cost < true_best_feasible_cost) {
                     true_best_feasible_cost = true_cost;
                 }
             }
-        } // Kết thúc 1 vòng lặp của m kiến
+        }
 
         if (iteration_best_cost < global_best_cost) {
             global_best_cost = iteration_best_cost;
@@ -226,19 +302,17 @@ double solve() {
         }
         else ++no_improve;
 
-        // Rải Pheromone TOÀN CỤC dựa trên lộ trình tốt nhất (dù nó có trễ giờ đi nữa)
         if (global_best_cost != 2e18) {
             int prev = 0;
             for (int i = 0; i < n; ++i) {
                 int curr = global_best_route[i];
-                tau[prev][curr] = (1.0 - theta_param) * tau[prev][curr] + theta_param * (1.0 / global_best_cost);
+                tau[prev][curr] = (1.0 - theta) * tau[prev][curr] + theta * (1.0 / global_best_cost);
                 prev = curr;
             }
-            tau[prev][0] = (1.0 - theta_param) * tau[prev][0] + theta_param * (1.0 / global_best_cost);
+            tau[prev][0] = (1.0 - theta) * tau[prev][0] + theta * (1.0 / global_best_cost);
         }
     }
 
-    // 6. Trả về nghiệm tốt nhất Khả thi nếu có, không thì trả về nghiệm Phạt tốt nhất
     return (true_best_feasible_cost != 2e18) ? true_best_feasible_cost : global_best_cost;
 }
 

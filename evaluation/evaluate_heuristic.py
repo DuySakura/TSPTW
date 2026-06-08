@@ -46,7 +46,7 @@ def run_testcase(test_file, executable_path):
             input=input_data,
             capture_output=True,
             text=True,
-            # timeout=TIME_LIMIT_SEC,
+            timeout=TIME_LIMIT_SEC,
             preexec_fn=set_process_limits
         )
         

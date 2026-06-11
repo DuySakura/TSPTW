@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+string objective = "makespan";
+
 int n;
 vector<vector<double>> t;
 vector<double> e, l, d;
@@ -25,7 +27,7 @@ double cal_cost(const vector<int> &route, double alpha) {
     if (route.empty()) return 2e18;
     
     int first_node = route[0];
-    double cost = t[0][first_node];
+    double travel_time = t[0][first_node];
     double cur_time = max(t[0][first_node], e[first_node - 1]);
     double total_penalty = max(0.0, cur_time - l[first_node - 1]);
 
@@ -33,13 +35,16 @@ double cal_cost(const vector<int> &route, double alpha) {
         int prev = route[i - 1];
         int cur = route[i];
         
-        cost += t[prev][cur];
+        travel_time += t[prev][cur];
         cur_time = max(cur_time + d[prev - 1] + t[prev][cur], e[cur - 1]);
         
         total_penalty += max(0.0, cur_time - l[cur - 1]);
     }
 
-    cost += t[route[n-1]][0];
+    travel_time += t[route[n-1]][0];
+    cur_time += d[route[n-1]] + t[route[n-1]][0];
+
+    double cost = objective == "travel_time" ? travel_time : cur_time;
     
     return cost + alpha * total_penalty;
 }
@@ -316,7 +321,13 @@ double solve() {
     return (true_best_feasible_cost != 2e18) ? true_best_feasible_cost : global_best_cost;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "travel_time") == 0) {
+            objective = argv[i];
+        }
+    }
+
     cin >> n;
     init();
     for (int i = 0; i < n; ++i) cin >> e[i] >> l[i] >> d[i];

@@ -1,8 +1,9 @@
+import sys
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 
 
-def solve(n, e, l, d, t):
+def solve(n, e, l, d, t, objective):
     manager = pywrapcp.RoutingIndexManager(n, 1, 0)
     routing = pywrapcp.RoutingModel(manager)
 
@@ -13,7 +14,6 @@ def solve(n, e, l, d, t):
         return t[from_node][to_node]
     
     travel_time_callback_idx = routing.RegisterTransitCallback(travel_time_callback)
-    routing.SetArcCostEvaluatorOfAllVehicles(travel_time_callback_idx)
 
     def arrival_time_callback(from_idx, to_idx):
         from_node = manager.IndexToNode(from_idx)
@@ -36,6 +36,15 @@ def solve(n, e, l, d, t):
     for i in range(n):
         time_dimension.CumulVar(manager.NodeToIndex(i)).SetRange(e[i], l[i])
 
+    if objective == 'makespan':
+        time_dimension.SetGlobalSpanCostCoefficient(1)
+
+    elif objective == 'travel_time':
+        routing.SetArcCostEvaluatorOfAllVehicles(travel_time_callback_idx)
+
+    else:
+        raise ValueError(f"Hàm mục tiêu không hợp lệ: {objective}")
+
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = routing_enums_pb2.FirstSolutionStrategy.LOCAL_CHEAPEST_INSERTION
     search_parameters.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
@@ -46,27 +55,15 @@ def solve(n, e, l, d, t):
 
     if solution:
         print(solution.ObjectiveValue())
-        # print(n - 1)
-
-        # idx = routing.Start(0)
-        
-        # while True:
-        #     idx = solution.Value(routing.NextVar(idx))
-
-        #     if routing.IsEnd(idx):
-        #         break
-
-        #     print(manager.IndexToNode(idx), end=' ')
-
-        # print()
     
     else:
         print(-1)
 
 
 if __name__ == "__main__":
-    n = int(input())
+    objective = sys.argv[1] if len(sys.argv) > 1 else "makespan"
 
+    n = int(input())
     tmp = [list(map(int, input().split())) for _ in range(n)]
     t = [list(map(int, input().split())) for _ in range(n + 1)]
     e = [0] + [row[0] for row in tmp]

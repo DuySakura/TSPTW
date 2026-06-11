@@ -1,8 +1,9 @@
+import sys
 import numpy as np
 from ortools.linear_solver import pywraplp
 
 
-def solve(n, e, l, d, t):
+def solve(n, e, l, d, t, objective):
     solver = pywraplp.Solver.CreateSolver('SCIP')
     if not solver:
         return
@@ -33,30 +34,32 @@ def solve(n, e, l, d, t):
         solver.Add(w[i] >= e[i])
         solver.Add(w[i] <= l[i])
 
-    solver.Minimize(np.sum(t * x))
+    if objective == 'makespan':
+        makespan_var = solver.NumVar(0, float(M), 'makespan')
+        for i in range(1, n):
+            solver.Add(makespan_var >= w[i] + d[i] + t[i][0] - M * (1 - x[i, 0]))
+
+        solver.Minimize(makespan_var)
+
+    elif objective == 'travel_time':
+        solver.Minimize(np.sum(t * x))
+
+    else:
+        raise ValueError(f"Hàm mục tiêu không hợp lệ: {objective}")
 
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL or status == pywraplp.Solver.FEASIBLE:
         print(solver.Objective().Value())
-        # print(n - 1)
-
-        # prev = 0
-        # for _ in range(n - 1):
-        #     for i in range(n):
-        #         if x[prev, i].solution_value() == True:
-        #             print(i, end=' ')
-        #             prev = i
-        #             break
-        # print()
     
     else:
         print(-1)
 
     
 if __name__ == "__main__":
+    objective = sys.argv[1] if len(sys.argv) > 1 else "makespan"
+    
     n = int(input())
-
     tmp = np.array([list(map(float, input().split())) for _ in range(n)])
     t = np.array([list(map(float, input().split())) for _ in range(n + 1)])
     e = np.insert(tmp[:, 0], 0, 0)

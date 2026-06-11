@@ -66,4 +66,4 @@ if __name__ == "__main__":
     l = np.insert(tmp[:, 1], 0, np.max(tmp[:, 1]) + np.max(t[:, 0]))
     d = np.insert(tmp[:, 2], 0, 0)
 
-    solve(n + 1, e, l, d, t)
+    solve(n + 1, e, l, d, t, objective)

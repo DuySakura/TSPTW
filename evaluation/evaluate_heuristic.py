@@ -7,14 +7,14 @@ import json
 
 EXECUTABLES = {
     'MIP': 'linear programming/branch_and_cut.py',
-    'CP': 'constrast programming/guided_local_search.py',
+    'CP': 'constraint programming/guided_local_search.py',
     'LS': 'local search/local_search',
     'TS': 'tabu search/tabu_search',
     'SA': 'stimulated annealing/stimulated_annealing',
     'ACS': 'ant colony system/acs'
 }
 
-DATA_DIR = "data/Dumas/makespan"
+DATA_DIR = "data/AFG/travel_time"
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 8 * 1024
 NUM_RUNS = 1

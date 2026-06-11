@@ -70,4 +70,4 @@ if __name__ == "__main__":
     l = [max(row[1] for row in tmp) + max(row[0] for row in t)] + [row[1] for row in tmp]
     d = [0] + [row[2] for row in tmp]
 
-    solve(n + 1, e, l, d, t)
+    solve(n + 1, e, l, d, t, objective)

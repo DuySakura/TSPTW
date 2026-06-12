@@ -14,7 +14,7 @@ EXECUTABLES = {
     'ACS': 'ant colony system/acs'
 }
 
-DATA_DIR = "data/Solomon/travel_time"
+DATA_DIR = "data/Solomon/makespan"
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 8 * 1024
 NUM_RUNS = 1

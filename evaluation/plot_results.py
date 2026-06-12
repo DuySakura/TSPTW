@@ -61,5 +61,5 @@ def plot_comparisons(json_file):
     print(f"Đã lưu 3 biểu đồ tại: {save_dir}")
 
 if __name__ == "__main__":
-    json_file = 'evaluation/results/Dumas/travel_time/result.json'
+    json_file = 'evaluation/results/Dumas/makespan/result.json'
     plot_comparisons(json_file)

@@ -6,15 +6,15 @@ import json
 
 
 EXECUTABLES = {
-    # 'MIP': 'linear programming/branch_and_cut.py',
+    'MIP': 'linear programming/branch_and_cut.py',
     # 'CP': 'constraint programming/guided_local_search.py',
-    # 'LS': 'local search/local_search',
-    # 'TS': 'tabu search/tabu_search',
-    # 'SA': 'stimulated annealing/stimulated_annealing',
+    'LS': 'local search/local_search',
+    'TS': 'tabu search/tabu_search',
+    'SA': 'stimulated annealing/stimulated_annealing',
     'ACS': 'ant colony system/acs'
 }
 
-DATA_DIR = "data/Dumas/makespan"
+DATA_DIR = "data/Solomon/makespan"
 TIME_LIMIT_SEC = 60
 MEMORY_LIMIT_MB = 8 * 1024
 NUM_RUNS = 1
@@ -90,7 +90,9 @@ def evaluate(executable_name, executable_path, objective):
     gap_count = 0
     total_gap = 0
 
-    for test_file in test_files:
+    for idx, test_file in enumerate(test_files):
+        print(f'[{idx}]/{total_count} Đang chạy {test_file}:', end='\t')
+
         status, elapsed, gap = run_testcase(test_file, executable_path, objective)
         total_time += elapsed
         if "AC" in status:
@@ -98,6 +100,9 @@ def evaluate(executable_name, executable_path, objective):
         if gap is not None:
             total_gap += gap
             gap_count += 1
+
+        gap_str = f" | Gap: {gap:.2f}%" if gap is not None else ""
+        print(f"{status} | Time: {elapsed:.2f}s{gap_str}")
 
     passed_percentage = (passed_count / total_count * 100) if total_count > 0 else 0
     avg_gap = (total_gap / gap_count) if gap_count > 0 else 0

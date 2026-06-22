@@ -3,11 +3,12 @@ import subprocess
 import time
 import resource
 import json
+from tqdm import tqdm
 
 
 EXECUTABLES = {
     'MIP': 'linear programming/branch_and_cut.py',
-    # 'CP': 'constraint programming/guided_local_search.py',
+    'CP': 'constraint programming/guided_local_search.py',
     'LS': 'local search/local_search',
     'TS': 'tabu search/tabu_search',
     'SA': 'stimulated annealing/stimulated_annealing',
@@ -55,14 +56,14 @@ def run_testcase(test_file, executable_path, objective):
             out_str = process.stdout.strip()
             heuristic_value = float(out_str)
             
-            if heuristic_value == -1.0:
+            if heuristic_value == -1:
                 status = "No Solution"
                 gap = None 
             else:
                 status = "AC"
                 gap = (heuristic_value - optimal_value) / optimal_value * 100 if optimal_value > 0 else 0
 
-                if abs(gap) < 1e-9:
+                if gap < 0 and abs(gap) < 1e-3:
                     gap = 0
                     
         else:
@@ -90,8 +91,7 @@ def evaluate(executable_name, executable_path, objective):
     gap_count = 0
     total_gap = 0
 
-    for idx, test_file in enumerate(test_files):
-        print(f'[{idx}]/{total_count} Đang chạy {test_file}:', end='\t')
+    for test_file in tqdm(test_files, unit="test"):
 
         status, elapsed, gap = run_testcase(test_file, executable_path, objective)
         total_time += elapsed
@@ -100,9 +100,6 @@ def evaluate(executable_name, executable_path, objective):
         if gap is not None:
             total_gap += gap
             gap_count += 1
-
-        gap_str = f" | Gap: {gap:.2f}%" if gap is not None else ""
-        print(f"{status} | Time: {elapsed:.2f}s{gap_str}")
 
     passed_percentage = (passed_count / total_count * 100) if total_count > 0 else 0
     avg_gap = (total_gap / gap_count) if gap_count > 0 else 0

@@ -100,11 +100,13 @@ double solve() {
             }
 
             vector<int> route = current_route;
-            swap(route[i], route[j]);
-            double cost = cal_cost(route, alpha);
-
             int u = route[i];
             int v = route[j];
+            int val = route[i];
+            int pos = (j > i) ? j - 1 : j;
+            route.erase(route.begin() + i);
+            route.insert(route.begin() + pos, val);
+            double cost = cal_cost(route, alpha);
 
             bool is_tabu = (tabu_list[u][v] >= iter);
             bool meets_aspiration = false;
@@ -129,7 +131,6 @@ double solve() {
 
         int tenure = random_tenure(gen);
         tabu_list[best_swap_u][best_swap_v] = iter + tenure;
-        tabu_list[best_swap_v][best_swap_u] = iter + tenure;
 
         bool improve = false;
         bool feasible = is_feasible(best_neighbor_route);

@@ -35,11 +35,11 @@ def solve(n, e, l, d, t, objective):
         solver.Add(w[i] <= l[i])
 
     if objective == 'makespan':
-        makespan_var = solver.NumVar(0, float(M), 'makespan')
+        c = solver.NumVar(0, float(M), 'makespan')
         for i in range(1, n):
-            solver.Add(makespan_var >= w[i] + d[i] + t[i][0] - M * (1 - x[i, 0]))
+            solver.Add(c >= w[i] + d[i] + t[i][0] - M * (1 - x[i, 0]))
 
-        solver.Minimize(makespan_var)
+        solver.Minimize(c)
 
     elif objective == 'travel_time':
         solver.Minimize(np.sum(t * x))
